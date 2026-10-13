@@ -141,6 +141,23 @@ The primary evaluation metrics are:
 
 **Important:** Metric values must be associated with the specific checkpoint, mask convention, and evaluation procedure that produced them. Results from an earlier model configuration should not be treated as the performance of the corrected checkpoint.
 
+## Test Results
+
+The corrected U-Net model was evaluated on the held-out WHU Building Dataset test set, consisting of **2,416 aerial image tiles**.
+
+Using a probability threshold of 0.5, the model achieved the following pixel-level segmentation results:
+
+| Metric | Test Score |
+|---|---:|
+| Dice Coefficient | 0.8950 (89.50%) |
+| Intersection over Union (IoU) | 0.8099 (80.99%) |
+| Precision | 0.8906 (89.06%) |
+| Recall | 0.8994 (89.94%) |
+
+These results were obtained using the corrected checkpoint, `unet_corrected_best.pth`, with the corrected building-label convention.
+
+The metrics measure pixel-level agreement between predicted and ground-truth building masks. They do not directly measure the accuracy of individual building polygons or their geographic positions.
+
 ### 4. Building Prediction
 
 The inference pipeline loads the trained U-Net checkpoint and generates building probabilities for an input image.
