@@ -28,17 +28,33 @@ The application allows users to upload an image, generate a building prediction,
 
 ## Application Preview
 
+## Application Preview
+
+The application provides an interactive workflow for building extraction from aerial imagery, combining deep-learning inference with geospatial processing and export capabilities.
+
+### Application Dashboard
+
+Upload imagery, configure extraction parameters, and run building predictions through the interactive interface.
+
+![Application overview](docs/images/application-overview.png)
+
 ### Building Segmentation
 
-The following image compares the input aerial image, ground-truth building mask, and model prediction.
+The U-Net model generates pixel-level building predictions from aerial imagery. The results can be inspected through the original image, predicted mask, and segmentation overlay.
 
-![Building segmentation comparison](data/predictions/linkedin_segmentation_comparison.png)
+![Building segmentation results](docs/images/building-segmentation.png)
 
-### Polygon Extraction
+### Building Polygon Extraction
 
-The project also explores converting predicted building masks into vector geometries.
+Predicted building masks can be converted into vector geometries and exported as GeoJSON for further analysis.
 
-![Building polygon extraction](data/predictions/linkedin_polygon_extraction.png)
+![Building polygon extraction](docs/images/polygon-extraction.png)
+
+### Geospatial Export
+
+For inputs containing valid georeferencing information, the application can export a GeoTIFF mask that preserves the source coordinate reference system and spatial transform. The resulting raster can be inspected in GIS software such as QGIS.
+
+![Geospatial output in QGIS](docs/images/geospatial-output.png)
 
 ## Dataset
 
