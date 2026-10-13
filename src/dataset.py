@@ -48,7 +48,7 @@ class WHUBuildingDataset(Dataset):
         image = image.astype(np.float32) / 255.0
 
         # Convert mask to binary values
-        mask = (mask > 0).astype(np.float32)
+        mask = (mask == 0).astype(np.float32)
 
         # ---------------------------------------------------------
         # Data augmentation

@@ -1,59 +1,74 @@
 # AI-Based Building Extraction from Aerial Imagery
 
-**A Computer Vision and GeoAI project using U-Net semantic segmentation to identify building regions in high-resolution aerial imagery.**
+### A Computer Vision and GeoAI project using U-Net semantic segmentation to extract building regions from aerial imagery.
 
-This project explores how deep learning can support geospatial workflows by identifying buildings in aerial images and converting predicted building masks into vector geometries.
+This project combines deep learning and geospatial processing to identify building regions in high-resolution aerial images and convert predicted segmentation masks into vector geometries.
 
-The project uses the **WHU Building Dataset**, PyTorch, and a U-Net segmentation architecture.
+Built with **PyTorch, U-Net, Rasterio, Shapely, and Streamlit**, the project demonstrates an end-to-end workflow from image input to building-mask prediction and geospatial export.
 
 ## Project Overview
 
-Building footprint extraction is an important task in remote sensing and GIS. Accurate building information can support urban mapping, infrastructure planning, and geospatial database updates.
+Building footprint extraction is an important application of remote sensing, GIS, and computer vision. Reliable building information can support urban mapping, infrastructure planning, and geospatial database development.
 
-The objective of this project is to develop a deep-learning workflow that identifies building pixels in high-resolution aerial imagery and investigates their conversion into vector polygons.
+This project uses a U-Net convolutional neural network trained on the WHU Building Dataset to perform binary semantic segmentation.
 
-### Current Progress
+The application allows users to upload an image, generate a building prediction, visualize the segmentation, adjust extraction parameters, and export the results.
 
-- Prepared and explored the WHU Building Dataset.
-- Implemented a U-Net segmentation model using PyTorch.
-- Trained and evaluated the model.
-- Generated building segmentation predictions on unseen test images.
-- Implemented an initial raster-to-vector polygonization workflow.
-- Investigated challenges associated with merging adjacent buildings during polygon extraction.
+### Key Features
 
-## Visual Results
+- **Deep learning segmentation:** U-Net model implemented using PyTorch.
+- **Image inference:** Predict building regions from uploaded aerial imagery.
+- **Interactive visualization:** Compare the original image, predicted mask, and segmentation overlay.
+- **Adjustable threshold:** Control how predicted probabilities are converted into a binary building mask.
+- **Polygon extraction:** Convert predicted building regions into vector geometries.
+- **GeoJSON export:** Download extracted polygon features.
+- **GeoTIFF export:** Export a binary mask while preserving source georeferencing when available.
+- **Geospatial compatibility:** Support georeferenced raster inputs for GIS workflows.
+- **Local GPU inference:** Use CUDA acceleration when a compatible GPU and PyTorch installation are available.
 
-The following comparison shows an aerial image, its ground-truth building mask, and the corresponding U-Net prediction.
+## Application Preview
+
+### Building Segmentation
+
+The following image compares the input aerial image, ground-truth building mask, and model prediction.
 
 ![Building segmentation comparison](data/predictions/linkedin_segmentation_comparison.png)
 
-The model predicts building regions at the pixel level. Converting these predictions into separate, accurate building footprints remains an area of development.
+### Polygon Extraction
+
+The project also explores converting predicted building masks into vector geometries.
+
+![Building polygon extraction](data/predictions/linkedin_polygon_extraction.png)
 
 ## Dataset
 
-This project uses the **WHU Building Dataset**, which contains high-resolution aerial imagery and corresponding building labels.
+The model was developed using the **WHU Building Dataset**, which provides aerial imagery and corresponding building annotations.
 
-The cropped image tiles used in this project have the following characteristics:
+The cropped tiles used in this project have the following characteristics:
 
-- Image dimensions: 512 × 512 pixels
-- Image format: TIFF
-- Image channels: RGB
-- Image data type: 8-bit unsigned integer
-- Labels: Binary building masks
-- Approximate spatial resolution: 0.3 metres per pixel
+| Property | Description |
+|---|---|
+| Image dimensions | 512 × 512 pixels |
+| Image format | TIFF |
+| Image channels | RGB |
+| Image data type | 8-bit unsigned integer |
+| Labels | Binary building masks |
+| Approximate spatial resolution | 0.3 metres per pixel |
 
 ### Dataset Split
 
-| Split | Number of image-label pairs |
+| Split | Image-label pairs |
 |---|---:|
 | Training | 4,736 |
 | Validation | 1,036 |
 | Test | 2,416 |
 | **Total** | **8,188** |
 
-The dataset is not included in this repository because of its size. Obtain it from the dataset's official distribution source and arrange the files as described below.
+The dataset is not included in this repository because of its size.
 
-Expected directory structure:
+Obtain the dataset from its official distribution source and follow its licensing and citation requirements.
+
+Arrange the files as follows:
 
 ```text
 data/
@@ -70,166 +85,221 @@ data/
             └── label/
 ```
 
+The dataset loader handles the building-label convention used by the corrected training workflow.
+
 ## Methodology
 
 ### 1. Data Preparation
 
-- Read aerial imagery and labels using Rasterio.
-- Convert RGB imagery into normalized tensors.
-- Convert building labels into binary masks.
+- Read aerial images and label masks.
+- Convert imagery into normalized tensors.
+- Convert annotations into binary building masks.
 - Apply data augmentation during training.
 
 ### 2. Model Architecture
 
-A U-Net convolutional neural network is used for semantic segmentation.
+The project uses a U-Net convolutional neural network for binary semantic segmentation.
 
-The architecture consists of an encoder that learns image features and a decoder that reconstructs spatially detailed segmentation maps. Skip connections help preserve spatial information between corresponding encoder and decoder stages.
+U-Net consists of an encoder that learns image features and a decoder that reconstructs spatially detailed predictions. Skip connections help preserve spatial information between corresponding stages.
 
-**Framework:** PyTorch
-**Model:** U-Net
-**Task:** Binary semantic segmentation
+| Component | Implementation |
+|---|---|
+| Model | U-Net |
+| Framework | PyTorch |
+| Task | Binary semantic segmentation |
+| Output | Building probability map and binary mask |
+| Acceleration | CUDA when available |
 
-### 3. Training
+### 3. Training and Evaluation
 
-The model was trained using a combination of binary cross-entropy and Dice loss.
+The training workflow uses a combination of binary cross-entropy and Dice loss.
 
-The training workflow includes training and validation datasets, GPU acceleration where available, and saving model checkpoints.
+The project includes training and validation workflows, model checkpoint saving, and evaluation using segmentation metrics.
 
-### 4. Evaluation
-
-The model was evaluated on the held-out test set using:
+The primary evaluation metrics are:
 
 - Dice coefficient
 - Intersection over Union (IoU)
 - Precision
 - Recall
 
+**Important:** Metric values must be associated with the specific checkpoint, mask convention, and evaluation procedure that produced them. Results from an earlier model configuration should not be treated as the performance of the corrected checkpoint.
+
+### 4. Building Prediction
+
+The inference pipeline loads the trained U-Net checkpoint and generates building probabilities for an input image.
+
+For larger images, overlapping tiles are used to process the image in manageable sections. Predictions from overlapping regions are combined before thresholding.
+
+A probability threshold converts the resulting probability map into a binary building mask.
+
 ### 5. Polygon Extraction
 
-Predicted binary masks are converted into polygon geometries using raster-to-vector processing.
+The binary mask can be converted into polygon geometries using raster-to-vector processing.
 
-An initial workflow has been implemented using Rasterio and Shapely. However, adjacent buildings can merge into connected regions, making it difficult to extract individual building footprints reliably.
+Rasterio and Shapely support polygon generation and geometry handling. A minimum-area filter helps remove small regions that may represent unwanted detections.
 
-Improving the separation and geometric accuracy of individual buildings is part of the ongoing work.
+Adjacent buildings can merge into a single connected region. Consequently, successful pixel-level segmentation does not guarantee that every individual building will be represented by a separate, geometrically accurate polygon.
 
-## Test Results
+## Running the Application
 
-The following metrics were obtained from the held-out test set:
+### Prerequisites
 
-| Metric | Test score |
-|---|---:|
-| Dice coefficient | 0.9883 |
-| Intersection over Union (IoU) | 0.9769 |
-| Precision | 0.9856 |
-| Recall | 0.9910 |
+- Python 3.11 recommended
+- A compatible PyTorch installation
+- The trained model checkpoint
+- Sufficient memory for the input imagery
+- CUDA-compatible hardware for GPU acceleration, if desired
 
-These metrics measure pixel-level segmentation performance. They do **not** establish the accuracy of individual vector building footprints.
-
-## Technology Stack
-
-- **Python** — Core implementation
-- **PyTorch** — Deep learning and model training
-- **Torchvision** — Computer vision utilities
-- **NumPy** — Numerical computation
-- **OpenCV** — Image processing
-- **Rasterio** — Raster data handling and polygonization
-- **Matplotlib** — Visualization
-- **Pillow** — Image utilities
-- **Scikit-learn** — Machine learning utilities
-
-FastAPI and Uvicorn are included in the project dependencies for potential API development. A functional inference API is not yet documented as completed.
-
-## Repository Structure
-
-```text
-Computer-Vision-Satellite-Imagery/
-├── src/
-│   ├── dataset.py
-│   ├── unet.py
-│   ├── losses.py
-│   ├── train.py
-│   ├── evaluate.py
-│   ├── evaluate_test.py
-│   ├── evaluate_validation.py
-│   ├── extract_polygons.py
-│   ├── polygonize_prediction.py
-│   ├── save_linkedin_visuals.py
-│   └── visualize_predictions.py
-├── data/
-│   └── predictions/
-│       ├── linkedin_segmentation_comparison.png
-│       ├── linkedin_polygon_extraction.png
-│       └── sample_132_buildings.geojson
-├── models/
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
-
-This structure highlights the main project components. Additional dataset inspection, diagnostic, evaluation, and visualization scripts are also present in `src/`.
-
-## Setup
-
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd Computer-Vision-Satellite-Imagery
+git clone https://github.com/NeerajKumarcodes/computer-vision-satellite-imagery.git
+cd computer-vision-satellite-imagery
 ```
 
-Replace the placeholder with your repository URL after creating it.
-
-### 2. Create a virtual environment
+### 2. Create a Virtual Environment
 
 ```bash
 python -m venv .venv
 ```
 
-Activate it on Windows PowerShell:
+On Windows PowerShell, activate it using:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Install dependencies
+### 3. Install Dependencies
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Install a PyTorch build appropriate for your hardware if the default installation does not provide the required GPU support.
+For GPU inference, install a PyTorch build compatible with your CUDA environment. Consult the [official PyTorch installation guide](https://pytorch.org/get-started/locally/) if setting up a new environment.
 
-### 4. Prepare the dataset
+### 4. Prepare the Model Checkpoint
 
-Download the WHU Building Dataset from its official distribution source and arrange the image and label files using the directory structure described above.
+The trained model checkpoint is not included in this repository.
 
-### 5. Run the project
+Place the appropriate checkpoint at the path expected by the inference code:
 
-The scripts in `src/` cover dataset inspection, training, evaluation, visualization, and polygon extraction.
+```text
+models/
+└── unet_corrected_best.pth
+```
 
-Review each script's configuration and expected inputs before running it. Training from scratch requires the dataset and can be computationally intensive.
+The checkpoint must match the model architecture and label convention expected by the inference pipeline.
 
-The pretrained checkpoint is not included in this repository, so reproducing inference results requires training the model or obtaining the corresponding checkpoint separately.
+### 5. Launch the Application
+
+From the repository root, run:
+
+```bash
+streamlit run app.py
+```
+
+Streamlit will provide a local address for opening the application in your browser.
+
+### 6. Run Building Extraction
+
+1. Upload an aerial image or supported raster file.
+2. Adjust the probability threshold and minimum polygon area as needed.
+3. Generate the building prediction.
+4. Inspect the segmentation mask and overlay.
+5. Download the binary mask or extracted GeoJSON.
+6. Export a GeoTIFF mask when the source raster contains usable georeferencing metadata.
+
+## Geospatial Outputs
+
+### GeoJSON
+
+Extracted polygon geometries can be exported as GeoJSON.
+
+When valid source georeferencing is available, polygon coordinates are transformed into the source map coordinate system and converted to geographic coordinates (EPSG:4326) for the GeoJSON output.
+
+For images without georeferencing information, polygons remain in image pixel coordinates. Such coordinates must not be interpreted as real-world geographic locations.
+
+### GeoTIFF Mask
+
+For georeferenced raster inputs, the application can export a binary mask as a GeoTIFF while preserving the source raster's coordinate reference system and affine transform.
+
+This output can be opened in GIS software such as QGIS for inspection alongside other spatial data.
+
+**Note:** Georeferenced output is only meaningful when the input contains valid spatial metadata. Ordinary PNG/JPEG images and non-georeferenced dataset tiles do not automatically provide real-world coordinates.
+
+## Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Core implementation |
+| PyTorch | Deep learning and inference |
+| Torchvision | Computer vision utilities |
+| NumPy | Numerical computation |
+| SciPy | Image processing and connected components |
+| Rasterio | Raster processing and polygonization |
+| Shapely | Geometry processing |
+| GeoPandas | Geospatial vector data handling |
+| Streamlit | Interactive application |
+| OpenCV | Image processing utilities |
+| Matplotlib | Visualization |
+| Pillow | Image loading and processing |
+| Scikit-learn | Machine learning utilities |
+
+FastAPI and Uvicorn are included as dependencies for potential future API development. A deployed inference API is not currently part of the documented application.
+
+## Repository Structure
+
+```text
+computer-vision-satellite-imagery/
+├── app.py
+├── src/
+│   ├── dataset.py
+│   ├── unet.py
+│   ├── losses.py
+│   ├── train.py
+│   ├── train_corrected.py
+│   ├── inference.py
+│   └── polygonize_prediction.py
+├── data/
+│   └── predictions/
+│       ├── linkedin_segmentation_comparison.png
+│       ├── linkedin_polygon_extraction.png
+│       └── sample_132_buildings.geojson
+├── models/
+│   └── [local model checkpoints]
+├── requirements.txt
+├── .gitignore
+├── LICENSE
+└── README.md
+```
+
+The tree above highlights the principal project components. Additional scripts may be present depending on the current development state.
+
+The dataset, local model checkpoints, virtual environment, and temporary outputs are excluded from version control.
 
 ## Current Limitations
 
-- The source image tiles do not contain geographic georeferencing information.
-- Polygon extraction may merge adjacent buildings into larger regions.
-- Pixel-level segmentation metrics do not measure individual-building polygon accuracy.
-- A complete, georeferenced building-footprint extraction workflow remains under development.
+- Predictions depend on image quality, image characteristics, and the similarity between inference imagery and the training dataset.
+- Building regions that touch or overlap may be merged during polygon extraction.
+- Polygon geometry quality is not established by pixel-level segmentation metrics alone.
+- Non-georeferenced imagery produces pixel-coordinate polygons rather than real-world footprints.
+- The trained checkpoint must be obtained separately or reproduced through training.
 
 ## Future Work
 
-- Improve separation of adjacent buildings.
-- Refine polygon geometry and remove unwanted regions.
-- Investigate georeferenced output using suitable source imagery and spatial metadata.
-- Develop an inference API.
+- Improve the separation of adjacent buildings.
+- Refine polygon boundaries and remove unwanted detections.
+- Evaluate building footprints using object-level and geometry-based metrics.
+- Investigate additional post-processing and instance-separation methods.
+- Extend testing across different aerial imagery sources.
+- Develop a dedicated inference API.
 - Explore integration with a WebGIS interface.
 
 ## Acknowledgements
 
-The project uses the WHU Building Dataset for research and experimentation. Please consult the dataset's official documentation for its citation requirements and usage terms.
+This project uses the WHU Building Dataset for research and experimentation. Consult the dataset's official documentation for attribution, citation, and usage requirements.
 
 ## Author
 
@@ -237,4 +307,4 @@ The project uses the WHU Building Dataset for research and experimentation. Plea
 
 M.Tech Geoinformatics | Remote Sensing | GIS | Computer Vision | GeoAI
 
-This is an independent learning and portfolio project exploring the intersection of geospatial technology and deep learning.
+An independent learning and portfolio project exploring the application of deep learning to geospatial analysis.

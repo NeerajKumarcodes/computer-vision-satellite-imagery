@@ -48,6 +48,36 @@ dataset = WHUBuildingDataset(
 
 image, mask = dataset[SAMPLE_INDEX]
 
+# --------------------------------------------------
+# Ground-truth mask diagnostics
+# --------------------------------------------------
+
+gt_mask = mask.squeeze().cpu().numpy()
+
+# Convert ground truth to binary values
+gt_binary = (gt_mask > 0.5).astype(np.uint8)
+
+print("\nGround Truth Diagnostics")
+print("-" * 40)
+print("Ground truth shape:", gt_binary.shape)
+print("Ground truth unique values:", np.unique(gt_binary))
+
+gt_foreground = int(gt_binary.sum())
+gt_percentage = (gt_foreground / gt_binary.size) * 100
+
+print("Ground truth foreground pixels:", gt_foreground)
+print(f"Ground truth foreground percentage: {gt_percentage:.2f}%")
+
+# Save ground-truth mask
+import cv2
+
+gt_path = OUTPUT_DIR / f"sample_{SAMPLE_INDEX}_ground_truth.png"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+cv2.imwrite(str(gt_path), gt_binary * 255)
+
+print("Saved ground truth:", gt_path)
+
 image_batch = image.unsqueeze(0).to(device)
 
 
@@ -77,12 +107,49 @@ with torch.no_grad():
 
     probabilities = torch.sigmoid(logits)
 
+    # Invert the prediction to identify building pixels.
+    # 1 = buildings, 0 = background.
     prediction = (
         probabilities[0, 0]
         .cpu()
         .numpy()
-        > THRESHOLD
+        <= THRESHOLD
     ).astype(np.uint8)
+
+# --------------------------------------------------
+# Diagnose predicted mask
+# --------------------------------------------------
+
+foreground_pixels = int(prediction.sum())
+total_pixels = int(prediction.size)
+foreground_percentage = (
+    foreground_pixels / total_pixels
+) * 100
+
+print("\nPrediction Mask Diagnostics")
+print("-" * 40)
+print("Image shape:", prediction.shape)
+print("Foreground pixels:", foreground_pixels)
+print("Total pixels:", total_pixels)
+print(f"Foreground percentage: {foreground_percentage:.2f}%")
+print("Unique values:", np.unique(prediction))
+
+# Save the binary prediction for inspection
+mask_path = (
+    OUTPUT_DIR
+    / f"sample_{SAMPLE_INDEX}_binary_prediction.png"
+)
+
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+import cv2
+
+cv2.imwrite(
+    str(mask_path),
+    prediction * 255,
+)
+
+print("Saved binary mask:", mask_path)
 
 
 # --------------------------------------------------
