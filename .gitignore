@@ -1,0 +1,50 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Large WHU Building Dataset
+data/raw/
+data/processed/
+
+# Model checkpoints and training artifacts
+models/*.pth
+models/*.pt
+models/*.ckpt
+models/*.onnx
+
+# Temporary prediction outputs
+# Keep the two selected LinkedIn visualizations and GeoJSON.
+data/predictions/*
+!data/predictions/linkedin_segmentation_comparison.png
+!data/predictions/linkedin_polygon_extraction.png
+!data/predictions/sample_132_buildings.geojson
+
+# Python logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
